@@ -1,33 +1,87 @@
 name: Build Android APK
+
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+    paths:
+      - 'apk_project/**'
+  workflow_dispatch:          # 允許手動觸發
+
 jobs:
   build:
     name: Build APK (Ubuntu + Buildozer)
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
+
     steps:
+      # ── 1. 取出程式碼 ─────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # ── 2. 設定 Python ────────────────────────────────────────
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      # ── 3. 安裝系統依賴 ───────────────────────────────────────
       - name: Install system dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev build-essential ccache libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev libfreetype6-dev
+          sudo apt-get install -y \
+            git zip unzip \
+            openjdk-17-jdk \
+            autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev \
+            libtinfo5 cmake libffi-dev libssl-dev \
+            build-essential ccache \
+            libsdl2-dev libsdl2-image-dev \
+            libsdl2-mixer-dev libsdl2-ttf-dev \
+            libportmidi-dev libswscale-dev \
+            libavformat-dev libavcodec-dev \
+            libfreetype6-dev
+
+      # ── 4. 快取 Buildozer / p4a ─────────────────────────────
+      - name: Cache buildozer global dir
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: buildozer-${{ runner.os }}-${{ hashFiles('apk_project/buildozer.spec') }}
+          restore-keys: |
+            buildozer-${{ runner.os }}-
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('apk_project/buildozer.spec') }}
+
+      # ── 5. 安裝 Buildozer + 特定版本 Cython ────────────────────────────
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
-          pip install buildozer cython
+          # 強制安裝 0.29.x 版本以相容舊版 pyjnius
+          pip install buildozer "Cython<3.0"
+
+      # ── 6. 打包 APK ───────────────────────────────────────────
       - name: Build debug APK
-        working-directory: .
+        working-directory: apk_project
         run: |
-          buildozer android debug
+          buildozer android debug 2>&1 | tee build.log
+
+      # ── 7. 上傳 APK Artifact ─────────────────────────────────
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: glyph-tester-debug-apk
-          path: bin/*.apk
+          path: apk_project/bin/*.apk
+          retention-days: 14
+
+      # ── 8. 上傳 build log（供除錯）────────────────────────────
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: apk_project/build.log
+          retention-days: 7
