@@ -11,6 +11,9 @@ version = 1.0.0
 
 requirements = python3,kivy,numpy,opencv,Cython==0.29.33
 
+pip.disable_packages = Cython
+p4a.branch = master
+
 orientation = portrait
 fullscreen = 0
 
