@@ -1,0 +1,4 @@
+kivy==2.3.0
+opencv-python
+numpy
+pyjnius; sys_platform == "android"
