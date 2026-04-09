@@ -38,3 +38,15 @@ jobs:
           # 加上這行環境變數，強迫 p4a 使用主機上的 Cython
           export P4A_CYTHON_BIN=cython
           buildozer android debug
+# ── 6. 打包 APK (加入更強制的版本鎖定) ─────────────────────────
+      - name: Build debug APK
+        working-directory: .
+        run: |
+          # 1. 先手動安裝 host 端需要的 Cython 包
+          pip install "Cython<3.0"
+          
+          # 2. 強制告訴 buildozer 使用主機系統的 Cython，不要自己重下
+          export P4A_cython_path=$(which cython)
+          
+          # 3. 執行打包，並加入 --requirements 的強制覆蓋
+          buildozer android debug
