@@ -9,9 +9,9 @@ source.include_patterns = assets/*,assets/templates/*
 
 version = 1.0.0
 
-requirements = python3,kivy,numpy,opencv,Cython==0.29.33
+requirements = python3,kivy,numpy,opencv,pyjnius==1.4.0
 
-p4a.branch = master
+
 
 orientation = portrait
 fullscreen = 0
