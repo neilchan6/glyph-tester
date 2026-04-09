@@ -9,7 +9,7 @@ source.include_patterns = assets/*,assets/templates/*
 
 version = 1.0.0
 
-requirements = python3,kivy,numpy,opencv
+requirements = python3,kivy,numpy,opencv,Cython==0.29.33
 
 p4a.branch = master
 
